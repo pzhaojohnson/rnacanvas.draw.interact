@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "outDir": "./dist/",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationDir": "./dist/",
+    "declarationMap": true,
+    "module": "es6",
+    "target": "es6",
+    "moduleResolution": "node"
+  }
+}

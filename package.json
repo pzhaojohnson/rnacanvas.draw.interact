@@ -1,0 +1,27 @@
+{
+  "name": "@rnacanvas/draw.interact",
+  "version": "1.0.0",
+  "description": "Interact with RNAcanvas structure drawings",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pzhaojohnson/rnacanvas.draw.interact.git"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack"
+  },
+  "author": "pzhaojohnson",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.23.7",
+    "@babel/preset-env": "^7.23.7",
+    "@babel/preset-typescript": "^7.23.3",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
