@@ -2,7 +2,7 @@ interface Nucleobase {
   /**
    * The actual DOM node corresponding to the nucleobase.
    */
-  domNode: SVGElement;
+  domNode: SVGGraphicsElement;
 }
 
 /**
@@ -35,7 +35,7 @@ interface LiveSet<T> {
  * given the set of currently selected SVG elements.
  */
 export class SelectedBases<B extends Nucleobase> {
-  constructor(private targetDrawing: Drawing<B>, private selectedSVGElements: LiveSet<SVGElement>) {}
+  constructor(private targetDrawing: Drawing<B>, private selectedSVGElements: LiveSet<SVGGraphicsElement>) {}
 
   [Symbol.iterator]() {
     return [...this.targetDrawing.bases].filter(b => this.selectedSVGElements.include(b.domNode)).values();
