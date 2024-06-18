@@ -107,6 +107,7 @@ export class DraggingTool {
 
     !this.dragged ? this.options?.beforeDragging ? this.options.beforeDragging() : {} : {};
 
+    // right now this tool is only able to handle dragging bases
     shift([...this.selectedElements.bases], { x: dragX, y: dragY });
 
     this.dragged = true;
