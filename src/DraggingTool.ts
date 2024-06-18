@@ -98,6 +98,9 @@ export class DraggingTool {
     if (!this.mouseIsDown) { return; }
     if (!this.lastMouseDown) { return; }
 
+    // this tool is not supposed to respond when the `Shift` key is held down
+    if (this.lastMouseDown.shiftKey) { return; }
+
     // check if the last mouse down event was on a selected element
     if (!(this.lastMouseDown.target instanceof SVGGraphicsElement)) { return; }
     if (!this.selectedElements.svgElements.include(this.lastMouseDown.target)) { return; }
