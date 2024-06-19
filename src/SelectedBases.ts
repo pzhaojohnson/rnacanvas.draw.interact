@@ -28,6 +28,11 @@ interface LiveSet<T> {
    * Adds all of the specified items to the set.
    */
   addAll(items: T[]): void;
+
+  /**
+   * Change event listeners are to be called whenever the composition of items in the set changes.
+   */
+  addEventListener(name: 'change', listener: () => void): void;
 }
 
 /**
@@ -53,5 +58,15 @@ export class SelectedBases<B extends Nucleobase> {
    */
   addAll(bs: Iterable<B>): void {
     this.selectedSVGElements.addAll([...bs].map(b => b.domNode));
+  }
+
+  /**
+   * Change events are defined as occurring whenever the set of selected bases changes.
+   *
+   * At present, change event listeners will sometimes be called even when
+   * the set of selected bases has not actually changed.
+   */
+  addEventListener(name: 'change', listener: () => void): void {
+    this.selectedSVGElements.addEventListener(name, listener);
   }
 }

@@ -15,6 +15,10 @@ class DrawingMock {
 class LiveSetMock {
   #items = new Set();
 
+  eventListeners = {
+    'change': [],
+  };
+
   [Symbol.iterator]() {
     return this.#items.values();
   }
@@ -25,6 +29,10 @@ class LiveSetMock {
 
   addAll(items) {
     items.forEach(item => this.#items.add(item));
+  }
+
+  addEventListener(name, listener) {
+    this.eventListeners[name].push(listener);
   }
 }
 
@@ -82,5 +90,18 @@ describe('SelectedBases class', () => {
     expect(selectedSVGElements.include(bases[3].domNode)).toBeTruthy();
     expect(selectedSVGElements.include(bases[5].domNode)).toBeTruthy();
     expect(selectedSVGElements.include(bases[8].domNode)).toBeTruthy();
+  });
+
+  it('supports change event listeners', () => {
+    let targetDrawing = new DrawingMock();
+    let selectedSVGElements = new LiveSetMock();
+
+    let selectedBases = new SelectedBases(targetDrawing, selectedSVGElements);
+
+    let listener = jest.fn();
+    expect(selectedSVGElements.eventListeners['change'].includes(listener)).toBeFalsy();
+
+    selectedBases.addEventListener('change', listener);
+    expect(selectedSVGElements.eventListeners['change'].includes(listener)).toBeTruthy();
   });
 });
