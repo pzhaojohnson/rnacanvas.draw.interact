@@ -78,7 +78,12 @@ export class DraggingTool {
    */
   private dragged = false;
 
-  constructor(private targetDrawing: Drawing, private selectedElements: SelectedElements, private options?: Options) {
+  /**
+   * @param target The target drawing for the dragging tool.
+   * @param selectedElements
+   * @param options
+   */
+  constructor(public target: Drawing, private selectedElements: SelectedElements, private options?: Options) {
     window.addEventListener('mousedown', event => this.handleMouseDown(event));
 
     window.addEventListener('mousemove', event => this.handleMouseMove(event));
@@ -105,8 +110,8 @@ export class DraggingTool {
     if (!(this.lastMouseDown.target instanceof SVGGraphicsElement)) { return; }
     if (!this.selectedElements.svgElements.include(this.lastMouseDown.target)) { return; }
 
-    let dragX = event.movementX / this.targetDrawing.horizontalClientScaling;
-    let dragY = event.movementY / this.targetDrawing.verticalClientScaling;
+    let dragX = event.movementX / this.target.horizontalClientScaling;
+    let dragY = event.movementY / this.target.verticalClientScaling;
 
     !this.dragged ? this.options?.beforeDragging ? this.options.beforeDragging() : {} : {};
 
