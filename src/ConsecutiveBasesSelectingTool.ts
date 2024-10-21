@@ -55,10 +55,10 @@ export class ConsecutiveBasesSelectingTool<B extends Nucleobase> {
   /**
    * The provided set of selected bases will be modified based on user interaction with the target drawing.
    *
-   * @param targetDrawing The drawing that the tool is for.
+   * @param target The drawing that the tool is for.
    * @param selectedBases A live set of the currently selected bases.
    */
-  constructor(private targetDrawing: Drawing<B>, private selectedBases: LiveSet<B>) {
+  constructor(public target: Drawing<B>, private selectedBases: LiveSet<B>) {
     window.addEventListener('mousedown', event => this.handleMouseDown(event));
 
     window.addEventListener('mouseup', event => this.handleMouseUp(event));
@@ -84,9 +84,9 @@ export class ConsecutiveBasesSelectingTool<B extends Nucleobase> {
     if (!lastMouseDown.shiftKey) { return; }
 
     if (!(event.target instanceof Node)) { return; }
-    if (!this.targetDrawing.domNode.contains(event.target)) { return; }
+    if (!this.target.domNode.contains(event.target)) { return; }
 
-    let bases = [...this.targetDrawing.bases];
+    let bases = [...this.target.bases];
 
     let mousedOverBaseIndex = bases.findIndex(b => b.domNode === event.target);
     if (mousedOverBaseIndex < 0) { return; }
