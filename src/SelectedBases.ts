@@ -40,10 +40,33 @@ interface LiveSet<T> {
  * given the set of currently selected SVG elements.
  */
 export class SelectedBases<B extends Nucleobase> {
-  constructor(private targetDrawing: Drawing<B>, private selectedSVGElements: LiveSet<SVGGraphicsElement>) {}
+  #target;
+
+  #eventListeners: EventListeners = {
+    'change': [],
+  };
+
+  constructor(target: Drawing<B>, private selectedSVGElements: LiveSet<SVGGraphicsElement>) {
+    this.#target = target;
+
+    selectedSVGElements.addEventListener('change', () => this.#callEventListeners('change'));
+  }
+
+  /**
+   * The target drawing.
+   */
+  get target() {
+    return this.#target;
+  }
+
+  set target(target) {
+    this.#target = target;
+
+    this.#callEventListeners('change');
+  }
 
   [Symbol.iterator]() {
-    return [...this.targetDrawing.bases].filter(b => this.selectedSVGElements.include(b.domNode)).values();
+    return [...this.target.bases].filter(b => this.selectedSVGElements.include(b.domNode)).values();
   }
 
   /**
@@ -67,6 +90,16 @@ export class SelectedBases<B extends Nucleobase> {
    * the set of selected bases has not actually changed.
    */
   addEventListener(name: 'change', listener: () => void): void {
-    this.selectedSVGElements.addEventListener(name, listener);
+    this.#eventListeners[name].push(listener);
+  }
+
+  #callEventListeners(name: 'change'): void {
+    this.#eventListeners[name].forEach(listener => listener());
   }
 }
+
+type EventListener = () => void;
+
+type EventListeners = {
+  'change': EventListener[],
+};

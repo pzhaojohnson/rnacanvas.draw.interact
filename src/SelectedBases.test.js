@@ -29,14 +29,46 @@ class LiveSetMock {
 
   addAll(items) {
     items.forEach(item => this.#items.add(item));
+
+    this.#callEventListeners('change');
   }
 
   addEventListener(name, listener) {
     this.eventListeners[name].push(listener);
   }
+
+  #callEventListeners(name) {
+    this.eventListeners[name].forEach(listener => listener());
+  }
 }
 
 describe('SelectedBases class', () => {
+  test('`get target()`', () => {
+    let target = new DrawingMock();
+
+    let selectedBases = new SelectedBases(target, new LiveSetMock());
+
+    expect(selectedBases.target).toBe(target);
+  });
+
+  test('`set target()`', () => {
+    let target1 = new DrawingMock();
+
+    let selectedBases = new SelectedBases(target1, new LiveSetMock());
+
+    let listener = jest.fn();
+    selectedBases.addEventListener('change', listener);
+
+    let target2 = new DrawingMock();
+
+    expect(listener).not.toHaveBeenCalled();
+
+    selectedBases.target = target2;
+    expect(selectedBases.target).toBe(target2);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('is iterable', () => {
     let targetDrawing = new DrawingMock();
 
@@ -92,16 +124,18 @@ describe('SelectedBases class', () => {
     expect(selectedSVGElements.include(bases[8].domNode)).toBeTruthy();
   });
 
-  it('supports change event listeners', () => {
-    let targetDrawing = new DrawingMock();
+  test('`addEventListener()`', () => {
     let selectedSVGElements = new LiveSetMock();
 
-    let selectedBases = new SelectedBases(targetDrawing, selectedSVGElements);
+    let selectedBases = new SelectedBases(new DrawingMock(), selectedSVGElements);
 
-    let listener = jest.fn();
-    expect(selectedSVGElements.eventListeners['change'].includes(listener)).toBeFalsy();
+    let listeners = [jest.fn(), jest.fn(), jest.fn()];
+    listeners.forEach(li => selectedBases.addEventListener('change', li));
 
-    selectedBases.addEventListener('change', listener);
-    expect(selectedSVGElements.eventListeners['change'].includes(listener)).toBeTruthy();
+    listeners.forEach(li => expect(li).not.toHaveBeenCalled());
+
+    selectedSVGElements.addAll([1, 2, 3, 4, 5]);
+
+    listeners.forEach(li => expect(li).toHaveBeenCalledTimes(1));
   });
 });
