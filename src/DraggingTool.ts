@@ -43,6 +43,24 @@ interface SelectedElements {
    * The currently selected bases.
    */
   bases: Iterable<Nucleobase>;
+
+  baseNumberings: Iterable<BaseNumbering>;
+}
+
+interface BaseNumbering {
+  readonly owner: Nucleobase;
+
+  displacement: {
+    /**
+     * Can be set to control base numbering displacement X component.
+     */
+    x: number;
+
+    /**
+     * Can be set to control base numbering displacement Y component.
+     */
+    y: number;
+  }
 }
 
 type Options = {
@@ -115,8 +133,17 @@ export class DraggingTool {
 
     !this.dragged ? this.options?.beforeDragging ? this.options.beforeDragging() : {} : {};
 
-    // right now this tool is only able to handle dragging bases
-    shift([...this.selectedElements.bases], { x: dragX, y: dragY });
+    let selectedBases = [...this.selectedElements.bases];
+    let selectedBasesSet = new Set(selectedBases);
+
+    shift(selectedBases, { x: dragX, y: dragY });
+
+    // don't shift any base numberings whose base was shifted
+    // (since base numberings follow their owner base)
+    [...this.selectedElements.baseNumberings].filter(bn => !selectedBasesSet.has(bn.owner)).forEach(bn => {
+      bn.displacement.x += dragX;
+      bn.displacement.y += dragY;
+    });
 
     this.dragged = true;
   }
