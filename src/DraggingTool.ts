@@ -1,6 +1,6 @@
-import type { Nucleobase } from '@rnacanvas/bases-layout';
+import type { Nucleobase } from '@rnacanvas/layout';
 
-import { shift } from '@rnacanvas/bases-layout';
+import { shift } from '@rnacanvas/layout';
 
 /**
  * An RNAcanvas structure drawing.
