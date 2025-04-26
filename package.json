@@ -1,6 +1,6 @@
 {
   "name": "@rnacanvas/draw.interact",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Interact with RNAcanvas structure drawings",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
     "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
     "@rnacanvas/layout": "^1.0.0"
