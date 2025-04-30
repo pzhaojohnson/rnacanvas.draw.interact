@@ -44,7 +44,13 @@ interface SelectedElements {
    */
   bases: Iterable<Nucleobase>;
 
+  readonly outlines: Iterable<Outline>;
+
   baseNumberings: Iterable<BaseNumbering>;
+}
+
+interface Outline {
+  readonly owner: Nucleobase;
 }
 
 interface BaseNumbering {
@@ -137,6 +143,12 @@ export class DraggingTool {
     let selectedBasesSet = new Set(selectedBases);
 
     shift(selectedBases, { x: dragX, y: dragY });
+
+    // don't shift any outlines whose owner bases are already being shifted
+    // (since outlines follow their owner bases)
+    [...this.selectedElements.outlines]
+      .filter(o => !selectedBasesSet.has(o.owner))
+      .forEach(o => shift([o.owner], { x: dragX, y: dragY }));
 
     // don't shift any base numberings whose base was shifted
     // (since base numberings follow their owner base)
