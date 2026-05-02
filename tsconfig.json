@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
+    "rootDir": "./src",
     "outDir": "./dist/",
     "sourceMap": true,
     "declaration": true,
@@ -8,6 +9,6 @@
     "declarationMap": true,
     "module": "es6",
     "target": "es6",
-    "moduleResolution": "node"
+    "moduleResolution": "bundler"
   }
 }
