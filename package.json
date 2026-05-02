@@ -1,7 +1,7 @@
 {
   "name": "@rnacanvas/draw.interact",
-  "version": "5.0.0",
-  "description": "Interact with RNAcanvas structure drawings",
+  "version": "5.0.1",
+  "description": "Drawing interaction",
   "repository": {
     "type": "git",
     "url": "https://github.com/pzhaojohnson/rnacanvas.draw.interact.git"
