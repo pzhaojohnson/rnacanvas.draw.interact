@@ -2,86 +2,9 @@ import type { Nucleobase } from '@rnacanvas/layout';
 
 import { shift } from '@rnacanvas/layout';
 
-/**
- * An RNAcanvas structure drawing.
- */
-interface Drawing {
-  /**
-   * The horizontal scaling factor going from the coordinate system of the drawing
-   * to the client coordinate system (i.e., the coordinate system used by methods such as `getBoundingClientRect`).
-   */
-  horizontalClientScaling: number;
-
-  /**
-   * The vertical scaling factor going from the coordinate system of the drawing
-   * to the client coordinate system (i.e., the coordinate system used by methods such as `getBoundingClientRect`).
-   */
-  verticalClientScaling: number;
-}
-
-/**
- * A live set of the currently selected elements.
- *
- * Its contents are expected to change as the set of currently selected elements changes.
- */
-interface SelectedElements {
-  /**
-   * The currently selected SVG elements.
-   *
-   * The DOM nodes within this set are expected to encompass
-   * the DOM nodes underlying all other selected elements.
-   */
-  svgElements: {
-    /**
-     * Returns true if the currently selected SVG elements include the specified element
-     * and returns false otherwise.
-     */
-    include(ele: SVGGraphicsElement): boolean;
-  }
-
-  /**
-   * The currently selected bases.
-   */
-  bases: Iterable<Nucleobase>;
-
-  readonly outlines: Iterable<Outline>;
-
-  baseNumberings: Iterable<BaseNumbering>;
-}
-
-interface Outline {
-  readonly owner: Nucleobase;
-}
-
-interface BaseNumbering {
-  readonly owner: Nucleobase;
-
-  displacement: {
-    /**
-     * Can be set to control base numbering displacement X component.
-     */
-    x: number;
-
-    /**
-     * Can be set to control base numbering displacement Y component.
-     */
-    y: number;
-  }
-}
-
-type Options = {
-  /**
-   * A callback function to be called right before dragging anything.
-   */
-  beforeDragging?: () => void;
-
-  /**
-   * A callback function to be called right after dragging something.
-   */
-  afterDragging?: () => void;
-};
-
 export class DraggingTool {
+  readonly #targetApp;
+
   /**
    * The most recent mouse down event.
    */
@@ -93,21 +16,15 @@ export class DraggingTool {
   private mouseIsDown = false;
 
   /**
-   * Indicates if the selected elements have been dragged
-   * during the current mouse down-move-up sequence.
+   * To be set to true immediately after a mouse move event that initiates dragging of the selected elements.
    *
-   * To be set to true after a mouse move event that causes the selected elements to be dragged.
-   *
-   * To be set to false afterwards upon mouse up.
+   * To be set to false after the next mouse up event.
    */
   private dragged = false;
 
-  /**
-   * @param target The target drawing for the dragging tool.
-   * @param selectedElements
-   * @param options
-   */
-  constructor(public target: Drawing, private selectedElements: SelectedElements, private options?: Options) {
+  constructor(targetApp: App) {
+    this.#targetApp = targetApp;
+
     window.addEventListener('mousedown', event => this.handleMouseDown(event));
 
     window.addEventListener('mousemove', event => this.handleMouseMove(event));
@@ -124,38 +41,54 @@ export class DraggingTool {
   }
 
   private handleMouseMove(event: MouseEvent): void {
-    if (!this.mouseIsDown) { return; }
-    if (!this.lastMouseDown) { return; }
+    if (!this.mouseIsDown) {
+      return;
+    } else if (!this.lastMouseDown) {
+      return;
+    }
 
-    // this tool is not supposed to respond when the `Shift` key is held down
-    if (this.lastMouseDown.shiftKey) { return; }
+    // elements aren't supposed to be dragged when the `Shift` key is held down
+    if (this.lastMouseDown.shiftKey) {
+      return;
+    }
 
-    // check if the last mouse down event was on a selected element
-    if (!(this.lastMouseDown.target instanceof SVGGraphicsElement)) { return; }
-    if (!this.selectedElements.svgElements.include(this.lastMouseDown.target)) { return; }
+    if (!(this.lastMouseDown.target instanceof SVGGraphicsElement)) {
+      return;
+    }
 
-    let dragX = event.movementX / this.target.horizontalClientScaling;
-    let dragY = event.movementY / this.target.verticalClientScaling;
+    let selectedSVGElements = this.#targetApp.selectedSVGElements;
 
-    !this.dragged ? this.options?.beforeDragging ? this.options.beforeDragging() : {} : {};
+    let selectedElementHighlightings = this.#targetApp.selectedElementHighlightings;
 
-    let selectedBases = [...this.selectedElements.bases];
+    // the last mouse down event must have been on a selected element (or a selected element highlighting) for dragging to occur
+    if (!selectedSVGElements.has(this.lastMouseDown.target) && !selectedElementHighlightings.domNode.contains(this.lastMouseDown.target)) {
+      return;
+    }
+
+    let dragX = event.movementX / this.#targetApp.drawing.horizontalClientScaling;
+    let dragY = event.movementY / this.#targetApp.drawing.verticalClientScaling;
+
+    !this.dragged ? this.#targetApp.beforeDragging() : {};
+
+    let selectedBases = [...this.#targetApp.selectedBases];
+
     let selectedBasesSet = new Set(selectedBases);
 
     shift(selectedBases, { x: dragX, y: dragY });
 
-    // don't shift any outlines whose owner bases are already being shifted
-    // (since outlines follow their owner bases)
-    [...this.selectedElements.outlines]
+    // don't shift any outlines whose bases were already shifted (since outlines follow their owner bases)
+    [...this.#targetApp.selectedOutlines]
       .filter(o => !selectedBasesSet.has(o.owner))
       .forEach(o => shift([o.owner], { x: dragX, y: dragY }));
 
-    // don't shift any base numberings whose base was shifted
-    // (since base numberings follow their owner base)
-    [...this.selectedElements.baseNumberings].filter(bn => !selectedBasesSet.has(bn.owner)).forEach(bn => {
-      bn.displacement.x += dragX;
-      bn.displacement.y += dragY;
-    });
+    // don't shift any numberings whose bases were already shifted (since numberings follow their owner bases)
+    [...this.#targetApp.selectedNumberings]
+      .filter(n => !selectedBasesSet.has(n.owner))
+      .forEach(n => {
+        // just shift the numbering here (not the owner base)
+        n.displacement.x += dragX;
+        n.displacement.y += dragY;
+      });
 
     this.dragged = true;
   }
@@ -163,7 +96,76 @@ export class DraggingTool {
   private handleMouseUp(event: MouseEvent): void {
     this.mouseIsDown = false;
 
-    this.dragged ? this.options?.afterDragging ? this.options.afterDragging() : {} : {};
+    this.dragged ? this.#targetApp.afterDragging() : {};
+
     this.dragged = false;
+  }
+}
+
+interface App {
+  readonly drawing: Drawing;
+
+  readonly selectedSVGElements: {
+    [Symbol.iterator](): Iterator<SVGGraphicsElement>;
+
+    has(ele: SVGGraphicsElement): boolean;
+  };
+
+  readonly selectedBases: Iterable<Nucleobase>;
+
+  readonly selectedOutlines: Iterable<Outline>;
+
+  readonly selectedNumberings: Iterable<Numbering>;
+
+  readonly selectedElementHighlightings: {
+    /**
+     * The DOM node containing all selected element highlightings.
+     */
+    readonly domNode: SVGGraphicsElement;
+  };
+
+  /**
+   * Operations to be done before dragging elements (e.g., hiding element highlightings).
+   */
+  beforeDragging(): void;
+
+  /**
+   * Operations to be done after dragging elements (e.g., reshowing element highlightings).
+   */
+  afterDragging(): void;
+}
+
+/**
+ * An RNAcanvas structure drawing.
+ */
+interface Drawing {
+  /**
+   * The horizontal scaling factor from the drawing coordinate system to the client coodinate system.
+   */
+  readonly horizontalClientScaling: number;
+
+  /**
+   * The vertical scaling factor from the drawing coordinate system to the client coordinate system.
+   */
+  readonly verticalClientScaling: number;
+}
+
+interface Outline {
+  readonly owner: Nucleobase;
+}
+
+interface Numbering {
+  readonly owner: Nucleobase;
+
+  displacement: {
+    /**
+     * Can be set to control displacement X component.
+     */
+    x: number;
+
+    /**
+     * Can be set to control displacement Y component.
+     */
+    y: number;
   }
 }
