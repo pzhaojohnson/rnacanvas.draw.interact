@@ -61,7 +61,7 @@ export class DraggingTool {
     let selectedElementHighlightings = this.#targetApp.selectedElementHighlightings;
 
     // the last mouse down event must have been on a selected element (or a selected element highlighting) for dragging to occur
-    if (!selectedSVGElements.has(this.lastMouseDown.target) && !selectedElementHighlightings.domNode.contains(this.lastMouseDown.target)) {
+    if (!selectedSVGElements.include(this.lastMouseDown.target) && !selectedElementHighlightings.domNode.contains(this.lastMouseDown.target)) {
       return;
     }
 
@@ -108,7 +108,7 @@ interface App {
   readonly selectedSVGElements: {
     [Symbol.iterator](): Iterator<SVGGraphicsElement>;
 
-    has(ele: SVGGraphicsElement): boolean;
+    include(ele: SVGGraphicsElement): boolean;
   };
 
   readonly selectedBases: Iterable<Nucleobase>;
