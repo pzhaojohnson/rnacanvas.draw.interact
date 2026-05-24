@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { SelectedBases } from './SelectedBases';
 
 class SVGElementMock {
@@ -5,7 +9,7 @@ class SVGElementMock {
 }
 
 class NucleobaseMock {
-  domNode = new SVGElementMock();
+  domNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
 }
 
 class DrawingMock {
@@ -41,6 +45,11 @@ class LiveSetMock {
     this.eventListeners[name].forEach(listener => listener());
   }
 }
+
+beforeAll(() => {
+  // needed for instance-of operations to work
+  globalThis.SVGGraphicsElement = SVGElement;
+});
 
 describe('SelectedBases class', () => {
   test('`get target()`', () => {
@@ -78,13 +87,22 @@ describe('SelectedBases class', () => {
     let selectedSVGElements = new LiveSetMock();
     selectedSVGElements.addAll([bases[2].domNode, bases[6].domNode, new SVGElementMock(), bases[3].domNode, new SVGElementMock()]);
 
+    // add some tspans to bases
+    [4, 8].forEach(i => bases[i].domNode.append(...[1, 2, 3].map(() => document.createElementNS('http://www.w3.org/2000/svg', 'tspan'))));
+
+    // select some tspans within bases
+    selectedSVGElements.addAll([4, 8].map(i => bases[i].domNode.childNodes[1]));
+
     let selectedBases = new SelectedBases(targetDrawing, selectedSVGElements);
 
     // only includes the selected bases
-    expect([...selectedBases].length).toBe(3);
+    expect([...selectedBases].length).toBe(5);
     expect([...selectedBases].includes(bases[2])).toBeTruthy();
     expect([...selectedBases].includes(bases[6])).toBeTruthy();
     expect([...selectedBases].includes(bases[3])).toBeTruthy();
+
+    // check bases selected by tspans
+    [4, 8].forEach(i => expect([...selectedBases].includes(bases[i])).toBeTruthy());
   });
 
   test('include method', () => {
@@ -96,10 +114,19 @@ describe('SelectedBases class', () => {
     let selectedSVGElements = new LiveSetMock();
     selectedSVGElements.addAll([new SVGElementMock(), bases[5].domNode, bases[1].domNode, new SVGElementMock(), new SVGElementMock()]);
 
+    // give some bases tspans
+    [2, 7, 9].forEach(i => bases[i].domNode.append(...[1, 2].map(() => document.createElementNS('http://www.w3.org/2000/svg', 'tspan'))));
+
+    // select tspans within some bases
+    selectedSVGElements.addAll([7, 9].map(i => bases[i].domNode.childNodes[0]));
+
     let selectedBases = new SelectedBases(targetDrawing, selectedSVGElements);
 
     expect(selectedBases.include(bases[1])).toBe(true);
     expect(selectedBases.include(bases[5])).toBe(true);
+
+    // bases selected by their tspans
+    [7, 9].forEach(i => expect(selectedBases.include(bases[i])).toBe(true));
 
     expect(selectedBases.include(bases[0])).toBe(false);
     expect(selectedBases.include(bases[2])).toBe(false);

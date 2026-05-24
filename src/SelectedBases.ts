@@ -1,3 +1,5 @@
+import { isSVGGraphicsElement } from '@rnacanvas/value-check';
+
 interface Nucleobase {
   /**
    * The actual DOM node corresponding to the nucleobase.
@@ -66,14 +68,23 @@ export class SelectedBases<B extends Nucleobase> {
   }
 
   [Symbol.iterator]() {
-    return [...this.target.bases].filter(b => this.selectedSVGElements.include(b.domNode)).values();
+    return [...this.target.bases].filter(b => this.include(b)).values();
   }
 
   /**
    * Returns true if the specified base is currently selected and returns false otherwise.
    */
   include(b: B): boolean {
-    return this.selectedSVGElements.include(b.domNode);
+    if (this.selectedSVGElements.include(b.domNode)) {
+      return true;
+    }
+
+    // also check if an element within the base (e.g., a tspan) is selected
+    return (
+      [...b.domNode.getElementsByTagName('*')]
+        .filter(isSVGGraphicsElement)
+        .some(ele => this.selectedSVGElements.include(ele))
+    );
   }
 
   /**
