@@ -1,6 +1,6 @@
 {
   "name": "@rnacanvas/draw.interact",
-  "version": "6.0.2",
+  "version": "7.0.0",
   "description": "Drawing interaction",
   "repository": {
     "type": "git",
@@ -26,6 +26,7 @@
     "webpack-cli": "^7.0.2"
   },
   "dependencies": {
+    "@rnacanvas/draw.svg": "^3.7.1",
     "@rnacanvas/layout": "^1.0.0",
     "@rnacanvas/value-check": "^2.7.0"
   }

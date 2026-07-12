@@ -2,6 +2,8 @@ import type { Nucleobase } from '@rnacanvas/layout';
 
 import { shift } from '@rnacanvas/layout';
 
+import { CoordinateSystem } from '@rnacanvas/draw.svg';
+
 export class DraggingTool {
   readonly #targetApp;
 
@@ -90,6 +92,19 @@ export class DraggingTool {
         n.displacement.y += dragY;
       });
 
+    let coordinateSystem = new CoordinateSystem(this.#targetApp.drawing.domNode);
+
+    // the point that the user is dragging "from"
+    let dragPoint = {
+      x: coordinateSystem.fromClientX(event.clientX),
+      y: coordinateSystem.fromClientY(event.clientY),
+    };
+
+    // all other SVG elements being dragged
+    let dragGroup = { has: (ele: SVGGraphicsElement) => selectedSVGElements.include(ele) };
+
+    [...this.#targetApp.drawing.tertiaryBonds].forEach(tb => tb.drag(dragX, dragY, { dragPoint, dragGroup }));
+
     this.dragged = true;
   }
 
@@ -140,6 +155,11 @@ interface App {
  */
 interface Drawing {
   /**
+   * The SVG document corresponding to the drawing.
+   */
+  readonly domNode: SVGSVGElement;
+
+  /**
    * The horizontal scaling factor from the drawing coordinate system to the client coodinate system.
    */
   readonly horizontalClientScaling: number;
@@ -148,6 +168,8 @@ interface Drawing {
    * The vertical scaling factor from the drawing coordinate system to the client coordinate system.
    */
   readonly verticalClientScaling: number;
+
+  readonly tertiaryBonds: Iterable<TertiaryBond>;
 }
 
 interface Outline {
@@ -168,4 +190,17 @@ interface Numbering {
      */
     y: number;
   }
+}
+
+interface TertiaryBond {
+  drag(x: number, y: number, options: { dragPoint: Point, dragGroup: Collection<SVGGraphicsElement> }): void;
+}
+
+type Point = {
+  x: number;
+  y: number;
+};
+
+interface Collection<T> {
+  has(item: T): boolean;
 }
