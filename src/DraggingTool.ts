@@ -103,7 +103,9 @@ export class DraggingTool {
     // all other SVG elements being dragged
     let dragGroup = { has: (ele: SVGGraphicsElement) => selectedSVGElements.include(ele) };
 
-    [...this.#targetApp.drawing.tertiaryBonds].forEach(tb => tb.drag(dragX, dragY, { dragPoint, dragGroup }));
+    let selectedTertiaryBonds = [...this.#targetApp.drawing.tertiaryBonds].filter(tb => selectedSVGElements.include(tb.domNode));
+
+    selectedTertiaryBonds.forEach(tb => tb.drag(dragX, dragY, { dragPoint, dragGroup }));
 
     this.dragged = true;
   }
@@ -193,6 +195,8 @@ interface Numbering {
 }
 
 interface TertiaryBond {
+  readonly domNode: SVGGraphicsElement;
+
   drag(x: number, y: number, options: { dragPoint: Point, dragGroup: Collection<SVGGraphicsElement> }): void;
 }
 
