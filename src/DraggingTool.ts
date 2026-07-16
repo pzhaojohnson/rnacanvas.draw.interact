@@ -2,6 +2,8 @@ import type { Nucleobase } from '@rnacanvas/layout';
 
 import { shift } from '@rnacanvas/layout';
 
+import { distance } from '@rnacanvas/points';
+
 import { CoordinateSystem } from '@rnacanvas/draw.svg';
 
 export class DraggingTool {
@@ -23,6 +25,13 @@ export class DraggingTool {
    * To be set to false after the next mouse up event.
    */
   private dragged = false;
+
+  /**
+   * The index of the defining point to drag when dragging tertiary bonds.
+   *
+   * Default to the first control point (or the end point for linear tertiary bonds).
+   */
+  #tertiaryBondsIndex = 1;
 
   constructor(targetApp: App) {
     this.#targetApp = targetApp;
@@ -92,22 +101,72 @@ export class DraggingTool {
         n.displacement.y += dragY;
       });
 
-    let coordinateSystem = new CoordinateSystem(this.#targetApp.drawing.domNode);
+    this.#dragTertiaryBonds(event);
 
-    // the point that the user is dragging "from"
-    let dragPoint = {
-      x: coordinateSystem.fromClientX(event.clientX),
-      y: coordinateSystem.fromClientY(event.clientY),
-    };
+    this.dragged = true;
+  }
+
+  #dragTertiaryBonds(mouseMove: MouseEvent) {
+    let selectedSVGElements = this.#targetApp.selectedSVGElements;
+
+    let selectedTertiaryBonds = [...this.#targetApp.drawing.tertiaryBonds].filter(tb => selectedSVGElements.include(tb.domNode));
+
+    if (!this.lastMouseDown) {
+      return;
+    } else if (!(this.lastMouseDown.target instanceof SVGGraphicsElement)) {
+      return;
+    }
+
+    // just drag the tertiary bond that was clicked on (if a tertiary bond was clicked on)
+    let draggedTertiaryBond = selectedTertiaryBonds.find(tb => tb.domNode === this.lastMouseDown?.target);
+
+    // no tertiary bond is being dragged
+    if (!draggedTertiaryBond) {
+      return;
+    }
+
+    let dragX = mouseMove.movementX / this.#targetApp.drawing.horizontalClientScaling;
+    let dragY = mouseMove.movementY / this.#targetApp.drawing.verticalClientScaling;
 
     // all other SVG elements being dragged
     let dragGroup = { has: (ele: SVGGraphicsElement) => selectedSVGElements.include(ele) };
 
-    let selectedTertiaryBonds = [...this.#targetApp.drawing.tertiaryBonds].filter(tb => selectedSVGElements.include(tb.domNode));
+    if (!this.dragged) {
+      this.#updateTertiaryBondsIndex(draggedTertiaryBond, mouseMove);
+    }
 
-    selectedTertiaryBonds.forEach(tb => tb.drag(dragX, dragY, { dragPoint, dragGroup }));
+    draggedTertiaryBond.drag(dragX, dragY, {
+      dragGroup,
+      dragPoint: draggedTertiaryBond.definingPoints.toArray()[this.#tertiaryBondsIndex],
+    });
+  }
 
-    this.dragged = true;
+  #updateTertiaryBondsIndex(draggedTertiaryBond: TertiaryBond, mouseMove: MouseEvent) {
+    let coordinateSystem = new CoordinateSystem(this.#targetApp.drawing.domNode);
+
+    // the point that the user is dragging "from"
+    let dragPoint = {
+      x: coordinateSystem.fromClientX(mouseMove.clientX),
+      y: coordinateSystem.fromClientY(mouseMove.clientY),
+    };
+
+    let precision = draggedTertiaryBond.length / 10;
+
+    // anchored to the closest tertiary bond
+    let anchoredDragPoint = draggedTertiaryBond.closestPoint(dragPoint, { precision });
+
+    let anchoredDefiningPoints: [Point, Index][] = (
+      draggedTertiaryBond
+        .definingPoints
+        .toArray()
+        .map((p, i) => [draggedTertiaryBond.closestPoint(p, { precision }), i])
+    );
+
+    // sort in increasing order by distance to the anchored drag point
+    anchoredDefiningPoints.sort(([p1, _], [p2, __]) => distance(p1, anchoredDragPoint) - distance(p2, anchoredDragPoint));
+
+    if (anchoredDefiningPoints.length == 0) { return; }
+    this.#tertiaryBondsIndex = anchoredDefiningPoints[0][1];
   }
 
   private handleMouseUp(event: MouseEvent): void {
@@ -197,7 +256,23 @@ interface Numbering {
 interface TertiaryBond {
   readonly domNode: SVGGraphicsElement;
 
-  drag(x: number, y: number, options: { dragPoint: Point, dragGroup: Collection<SVGGraphicsElement> }): void;
+  readonly length: number;
+
+  /**
+   * Returns the closest point on a tertiary bond to a given point.
+   *
+   * The `precision` option corresponds to the margin for error in the calculation.
+   */
+  closestPoint(p: Point, options?: { precision?: number }): Point;
+
+  /**
+   * The points that define the path of a tertiary bond (in order).
+   */
+  readonly definingPoints: {
+    toArray(): Point[];
+  };
+
+  drag(x: number, y: number, options?: { dragPoint?: Point, dragGroup?: Collection<SVGGraphicsElement> }): void;
 }
 
 type Point = {
@@ -208,3 +283,5 @@ type Point = {
 interface Collection<T> {
   has(item: T): boolean;
 }
+
+type Index = number;
