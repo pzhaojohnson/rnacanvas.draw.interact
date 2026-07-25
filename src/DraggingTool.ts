@@ -135,10 +135,12 @@ export class DraggingTool {
 
     // don't change the drag point mid-dragging
     if (!this.dragged) {
-      this.#tertiaryBondsDragPoint = draggedTertiaryBond.definingPoints.anchored().closest({
-        x: coordinateSystem.fromClientX(mouseMove.clientX),
-        y: coordinateSystem.fromClientY(mouseMove.clientY),
-      });
+      this.#tertiaryBondsDragPoint = draggedTertiaryBond.definingPoints.anchored().closest(
+        draggedTertiaryBond.closestPoint({
+          x: coordinateSystem.fromClientX(mouseMove.clientX),
+          y: coordinateSystem.fromClientY(mouseMove.clientY),
+        })
+      );
     }
 
     this.#tertiaryBondsDragPoint?.drag(dragX, dragY);
