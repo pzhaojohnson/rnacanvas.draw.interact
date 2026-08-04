@@ -144,7 +144,12 @@ export class DraggingTool {
 
       let ps = draggedTertiaryBond.definingPoints.toArray();
 
-      let anchored = ps.map(p => draggedTertiaryBond.closestPoint(p));
+      // don't need to calculate for start and end points
+      let anchored = [
+        { length: 0 },
+        ps.slice(1, -1).map(p => draggedTertiaryBond.closestPoint(p, { precision: 1 })),
+        { length: draggedTertiaryBond.length },
+      ];
 
       // sort by length distance
       let sorted = [...anchored].sort((p1, p2) => distance(p1.length, length) - distance(p2.length, length));
