@@ -140,16 +140,11 @@ export class DraggingTool {
 
     // don't change which defining point is being dragged mid-dragging
     if (!this.dragged) {
-      let length = draggedTertiaryBond.closestPoint(dragPoint).length;
+      let length = draggedTertiaryBond.closestPoint(dragPoint, { precision: 1 }).length;
 
       let ps = draggedTertiaryBond.definingPoints.toArray();
 
-      // don't need to calculate for start and end points
-      let anchored = [
-        { length: 0 },
-        ps.slice(1, -1).map(p => draggedTertiaryBond.closestPoint(p, { precision: 1 })),
-        { length: draggedTertiaryBond.length },
-      ];
+      let anchored = ps.map(p => draggedTertiaryBond.closestPoint(p, { precision: 1 }));
 
       // sort by length distance
       let sorted = [...anchored].sort((p1, p2) => distance(p1.length, length) - distance(p2.length, length));
