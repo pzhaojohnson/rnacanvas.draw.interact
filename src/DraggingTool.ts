@@ -140,11 +140,11 @@ export class DraggingTool {
 
     // don't change which defining point is being dragged mid-dragging
     if (!this.dragged) {
-      let length = draggedTertiaryBond.closestPoint(dragPoint, { precision: 1 }).length;
+      let length = draggedTertiaryBond.closestPoint(dragPoint).length;
 
       let ps = draggedTertiaryBond.definingPoints.toArray();
 
-      let anchored = ps.map(p => draggedTertiaryBond.closestPoint(p, { precision: 1 }));
+      let anchored = ps.map(p => draggedTertiaryBond.closestPoint(p));
 
       // sort by length distance
       let sorted = [...anchored].sort((p1, p2) => distance(p1.length, length) - distance(p2.length, length));
@@ -266,7 +266,7 @@ interface TertiaryBond {
    *
    * The `precision` option corresponds to the margin for error in the calculation.
    */
-  closestPoint(p: Point, options?: { precision?: number }): {
+  closestPoint(p: Point): {
     x: number;
     y: number;
 
