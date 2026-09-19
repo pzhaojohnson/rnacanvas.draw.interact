@@ -103,6 +103,8 @@ export class DraggingTool {
 
     this.#dragTertiaryBonds(event);
 
+    this.#dragStrungElements(event);
+
     this.dragged = true;
   }
 
@@ -160,6 +162,28 @@ export class DraggingTool {
 
       // ensure that the desired defining point is dragged
       dragPoint: draggedTertiaryBond.definingPoints.toArray()[this.#tertiaryBondsDragIndex],
+    });
+  }
+
+  #dragStrungElements(mouseMove: MouseEvent) {
+    let selectedStrungElements = (
+      this.#targetApp.drawing.strungElements.toArray().filter(ele => this.#targetApp.selectedSVGElements.include(ele.domNode))
+    );
+
+    let dragX = mouseMove.movementX / this.#targetApp.drawing.horizontalClientScaling;
+    let dragY = mouseMove.movementY / this.#targetApp.drawing.verticalClientScaling;
+
+    selectedStrungElements.forEach(ele => {
+      if (this.#targetApp.selectedSVGElements.include(ele.owner.domNode)) {
+        // don't drag
+      } else if (this.#targetApp.selectedSVGElements.include(ele.owner.base1.domNode)) {
+        // don't drag
+      } else if (this.#targetApp.selectedSVGElements.include(ele.owner.base2.domNode)) {
+        // don't drag
+      } else {
+        ele.displacementX += dragX;
+        ele.displacementY += dragY;
+      }
     });
   }
 
@@ -227,6 +251,10 @@ interface Drawing {
   readonly verticalClientScaling: number;
 
   readonly tertiaryBonds: Iterable<TertiaryBond>;
+
+  readonly strungElements: {
+    toArray(): StrungElement[];
+  }
 }
 
 interface Nucleobase extends Nucleobase_ {
@@ -284,6 +312,23 @@ interface TertiaryBond {
   };
 
   drag(x: number, y: number, options?: { dragGroup?: Collection<SVGGraphicsElement>, dragPoint?: Point}): void;
+}
+
+interface StrungElement {
+  readonly domNode: SVGGraphicsElement;
+
+  /**
+   * Assumed to be a bond here.
+   */
+  readonly owner: {
+    readonly domNode: SVGGraphicsElement;
+
+    readonly base1: Nucleobase;
+    readonly base2: Nucleobase;
+  };
+
+  displacementX: number;
+  displacementY: number;
 }
 
 type Point = {
