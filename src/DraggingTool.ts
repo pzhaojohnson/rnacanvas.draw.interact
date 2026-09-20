@@ -181,8 +181,7 @@ export class DraggingTool {
       } else if (this.#targetApp.selectedSVGElements.include(ele.owner.base2.domNode)) {
         // don't drag
       } else {
-        ele.displacementX += dragX;
-        ele.displacementY += dragY;
+        ele.drag(dragX, dragY);
       }
     });
   }
@@ -327,8 +326,7 @@ interface StrungElement {
     readonly base2: Nucleobase;
   };
 
-  displacementX: number;
-  displacementY: number;
+  drag(x: number, y: number): void;
 }
 
 type Point = {
