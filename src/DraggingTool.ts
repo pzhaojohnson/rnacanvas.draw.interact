@@ -103,7 +103,7 @@ export class DraggingTool {
 
     this.#dragTertiaryBonds(event);
 
-    this.#dragStrungElements(event);
+    this.#dragStrungElement(event);
 
     this.dragged = true;
   }
@@ -165,25 +165,27 @@ export class DraggingTool {
     });
   }
 
-  #dragStrungElements(mouseMove: MouseEvent) {
+  #dragStrungElement(mouseMove: MouseEvent) {
     let selectedStrungElements = (
       this.#targetApp.drawing.strungElements.toArray().filter(ele => this.#targetApp.selectedSVGElements.include(ele.domNode))
     );
 
+    let draggedStrungElement = selectedStrungElements.find(ele => ele.domNode === this.lastMouseDown?.target);
+
+    if (!draggedStrungElement) {
+      return;
+    }
+
     let dragX = mouseMove.movementX / this.#targetApp.drawing.horizontalClientScaling;
     let dragY = mouseMove.movementY / this.#targetApp.drawing.verticalClientScaling;
 
-    selectedStrungElements.forEach(ele => {
-      if (this.#targetApp.selectedSVGElements.include(ele.owner.domNode)) {
-        // don't drag
-      } else if (this.#targetApp.selectedSVGElements.include(ele.owner.base1.domNode)) {
-        // don't drag
-      } else if (this.#targetApp.selectedSVGElements.include(ele.owner.base2.domNode)) {
-        // don't drag
-      } else {
-        ele.drag(dragX, dragY);
-      }
-    });
+    if (this.#targetApp.selectedSVGElements.include(draggedStrungElement.owner.base1.domNode)) {
+      // don't drag
+    } else if (this.#targetApp.selectedSVGElements.include(draggedStrungElement.owner.base2.domNode)) {
+      // don't drag
+    } else {
+      draggedStrungElement.drag(dragX, dragY);
+    }
   }
 
   private handleMouseUp(event: MouseEvent): void {
